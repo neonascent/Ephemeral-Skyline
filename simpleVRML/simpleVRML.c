@@ -137,6 +137,7 @@ int				loopImages = 0;
 /* Josh image processing */
 
 int				framerate = 8;
+int				history = 1;
 
 
 // ============================================================================
@@ -150,8 +151,8 @@ char * getNextFile(void)
 	struct dirent *ep;
 
 	if (ep = readdir (dp)) {
-		char *filename;
-		filename = (char *)malloc(30*sizeof(char));
+		//char *filename;
+		//filename = (char *)malloc(30*sizeof(char));
 		strcpy( filename,	ep->d_name);
 		return(filename);
 	} 
@@ -164,7 +165,6 @@ char * getNextFile(void)
 ILubyte * GetNextImage(void)
 {
 	char			*nextFile;
-	ILuint			image;
 	
 	// setup source directory
 	char path[200];
@@ -177,8 +177,8 @@ ILubyte * GetNextImage(void)
 
 	if (nextFile) {
 		//ilInit();
-		ilGenImages(1,&image);
-		ilBindImage(image);
+		//ilGenImages(1,&image);
+		//ilBindImage(image);
 
 		//puts( ep->d_name);
 		strcpy(filename, nextFile);
@@ -190,6 +190,8 @@ ILubyte * GetNextImage(void)
 		// get size
 		xsize = ilGetInteger(IL_IMAGE_WIDTH);
 		ysize = ilGetInteger(IL_IMAGE_HEIGHT); 
+		fprintf(stdout, "image size (x,y) = (%d,%d)\n", xsize, ysize);
+
 
 		//ilLoadImage("C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\carpark - AR 001.JPG"); //bind .jpeg function to image
 		ilConvertImage( IL_BGRA, IL_UNSIGNED_BYTE); //convert to ARUint8
@@ -225,8 +227,9 @@ static int setupCamera(const char *cparam_name, char *vconf, ARParam *cparam)
 	// get first image for size, then reload directory
 	GetNextImage();
 	dp = opendir (directory);
+
 	// if over size limit (or possibly not detected) 
-	if ((xsize >= 1024) || (ysize >= 1024) || (xsize == false) || (ysize == false))
+	if ((xsize >= 1024) || (ysize >= 1024) || (xsize == FALSE) || (ysize == FALSE))
 	 {
 		printf("Image size invalid - too big or broken !!\n");
         exit(0);
@@ -422,7 +425,7 @@ static void Idle(void)
 			if (k != -1) {
 				// Get the transformation between the marker and the real camera.
 				//fprintf(stderr, "Saw object %d.\n", i);
-				if (gObjectData[i].visible == 0) {
+				if ((gObjectData[i].visible == 0) || (history == 0)){
 					arGetTransMat(&marker_info[k],
 								  gObjectData[i].marker_center, gObjectData[i].marker_width,
 								  gObjectData[i].trans);
@@ -478,6 +481,45 @@ static void Reshape(int w, int h)
 	// Call through to anyone else who needs to know about window sizing here.
 }
 
+static void captureImage(void) {
+
+
+	// capture
+	//ILuint ratz;
+	//vector<GLubyte> store;
+	char *savePath[200];
+
+	//GLubyte *store= GLubyte[xsize * ysize * 4];
+	//GLubyte store[307200];
+	GLubyte *store;
+	store = (GLubyte *)malloc(xsize * ysize * 4);
+
+	/* capture */
+
+	//ilGenImages(1, &ratz);
+	//ilBindImage(ratz);
+
+	//store.resize(xsize * ysize * 4);
+	glReadPixels(0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &store[0]);
+	//glReadPixels(0, 0, 240, 320, GL_RGBA, GL_UNSIGNED_BYTE, &store[0]);
+
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, &store[0]);
+	
+	ilEnable(IL_FILE_OVERWRITE);
+	//ilSaveImage(sortie.c_str());
+	
+	strcpy(savePath, outputDir);
+	strcat(savePath, filename);
+
+	//ilSaveImage("C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\out.jpg");
+	printf("Saving %s\n", savePath);
+	ilSaveImage(savePath);
+	//ilSaveImage("C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\output\\out.jpg");
+	
+	/* capture */
+	free(store);
+}
+
 //
 // This function is called when the window needs redrawing.
 //
@@ -525,7 +567,23 @@ static void Display(void)
 	//none
 	
 	glutSwapBuffers();
+	
+	captureImage();
+	
 }
+
+
+/* cleanup function called when program exits */
+static void cleanup(void)
+{
+    arVideoCapStop();
+    arVideoClose();
+    argCleanup();
+	
+
+	closedir (dp);
+}
+
 
 int main(int argc, char** argv)
 {
@@ -552,11 +610,11 @@ int main(int argc, char** argv)
         printf_s( "  argv[%d]   %s\n", count, argv[count] );
 	*/
 	
-	if (argc != 4) {
-		printf("We need IN directory, out directory, and framerate");
-			// pause 
-	printf("Press a key to start  \n");
-	getchar();
+	if (argc != 5) {
+		printf("We need IN directory, out directory, and framerate, history");
+		// pause 
+		printf("Press a key to start  \n");
+		getchar();
 
 		exit(-1);
 	}
@@ -564,6 +622,7 @@ int main(int argc, char** argv)
 	directory   = argv[1];
 	outputDir	= argv[2];
 	framerate	= atoi(argv[3]);
+	history = atoi(argv[4]);
 
 
 	// ----------------------------------------------------------------------------
