@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libAR.lib libARgsub.lib libARvideo.lib opengl32.lib glu32.lib glut32.lib"
+				AdditionalDependencies="libAR.lib libARgsub.lib libARvideo.lib opengl32.lib glu32.lib glut32.lib ilu.lib ilut.lib devil.lib"
 				OutputFile="$(ProjectDir)..\..\bin\$(ProjectName).exe"
 				AdditionalLibraryDirectories="&quot;$(ProjectDir)..\..\lib&quot;"
 				RandomizedBaseAddress="1"

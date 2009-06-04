@@ -65,8 +65,6 @@ static void   cleanup(void);
 static void   keyEvent( unsigned char key, int x, int y);
 static void   mainLoop(void);
 static void   draw(void);
-static void   geometryout( void );
-
 
 /* Josh image processing */
 
@@ -75,21 +73,11 @@ ILubyte * GetNextImage(void);
 
 // devil
 char			filename[200];
-int				xsize, ysize;
 // directory
 DIR				*dp;
-char            *directory      = "";
-char			*outputDir		= "";
-int				loopImages = 0;
+char            *directory      = "C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\";
+char			*outputDir		= "C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\output\\";
 /* Josh image processing */
-
-int				framerate = 8;
-int				geometry = 1;
-
-
-// ============================================================================
-//	Functions
-// ============================================================================
 
 /* Gets the next file in this directory, or at end, return NULL */
 char * getNextFile(void)
@@ -98,8 +86,8 @@ char * getNextFile(void)
 	struct dirent *ep;
 
 	if (ep = readdir (dp)) {
-		//char *filename;
-		//filename = (char *)malloc(30*sizeof(char));
+		char *filename;
+		filename = (char *)malloc(30*sizeof(char));
 		strcpy( filename,	ep->d_name);
 		return(filename);
 	} 
@@ -112,7 +100,7 @@ char * getNextFile(void)
 ILubyte * GetNextImage(void)
 {
 	char			*nextFile;
-	
+	ILuint			image;
 	// setup source directory
 	char path[200];
 	strcpy (path, directory);
@@ -124,8 +112,8 @@ ILubyte * GetNextImage(void)
 
 	if (nextFile) {
 		//ilInit();
-		//ilGenImages(1,&image);
-		//ilBindImage(image);
+		ilGenImages(1,&image);
+		ilBindImage(image);
 
 		//puts( ep->d_name);
 		strcpy(filename, nextFile);
@@ -134,49 +122,21 @@ ILubyte * GetNextImage(void)
 		printf("Opening %s\n", path);
 		ilLoadImage(path);
 
-		// get size
-		xsize = ilGetInteger(IL_IMAGE_WIDTH);
-		ysize = ilGetInteger(IL_IMAGE_HEIGHT); 
-		fprintf(stdout, "image size (x,y) = (%d,%d)\n", xsize, ysize);
-
-
 		//ilLoadImage("C:\\Documents and Settings\\Administrator\\Desktop\\carpark - AR\\carpark - AR 001.JPG"); //bind .jpeg function to image
 		ilConvertImage( IL_BGRA, IL_UNSIGNED_BYTE); //convert to ARUint8
 		return(ilGetData());
-	} else if (loopImages == 1) {
-		dp = opendir (directory);
 	}
+
 	return NULL;
 }
 
+
+
+
 int main(int argc, char **argv)
 {
-	char **argvT;	
-	// Display each command-line argument.
-    /*
-	printf_s( "\nCommand-line arguments:\n" );
-    for( count = 0; count < argc; count++ )
-        printf_s( "  argv[%d]   %s\n", count, argv[count] );
-	*/
-	
-	if (argc != 5) {
-		printf("We need IN directory, out directory, and framerate, geometry");
-		// pause 
-		printf("Press a key to start  \n");
-		getchar();
-
-		exit(-1);
-	}
-
-	directory   = argv[1];
-	outputDir	= argv[2];
-	framerate	= atoi(argv[3]);
-	geometry = atoi(argv[4]);
-
-	//glutInit(0, argvT);
+	glutInit(&argc, argv);
 	init();
-
-
 
 	// pause 
 	printf("Press a key to start  \n");
@@ -242,11 +202,7 @@ static void mainLoop(void)
 		/* get the transformation between the marker and the real camera */
 		arGetTransMat(&marker_info[k], patt_center, patt_width, patt_trans);
 
-		if (geometry == 0) {
-			draw();
-		} else {
-			geometryout();
-		}
+		draw();
 
 		argSwapBuffers();
 	} else  {
@@ -263,8 +219,11 @@ static void init( void )
 {
 	/* Josh */
 	ARParam wparam;
-	xsize = 1024; //my size of picture
-	ysize = 1024;
+	xsize = 240; //my size of picture
+	ysize = 320;
+
+
+
 
 	//dp = opendir ("./");
 	dp = opendir (directory);
@@ -276,17 +235,6 @@ static void init( void )
 	if (dp == NULL)
 	 {
 		printf("Image directory could not be opened !!\n");
-        exit(0);
-	 }
-
-	// get first image for size, then reload directory
-	GetNextImage();
-	dp = opendir (directory);
-
-	// if over size limit (or possibly not detected) 
-	if ((xsize >= 1024) || (ysize >= 1024) || (xsize == FALSE) || (ysize == FALSE))
-	 {
-		printf("Image size invalid - too big or broken !!\n");
         exit(0);
 	 }
 
@@ -430,7 +378,8 @@ static void geometryout( void )
     
 	/* load the camera transformation matrix */
     argConvGlpara(patt_trans, gl_para);
-	
+
+    printf  this is it
 	printf("Matrix:\n\t%d\t%d\t%d\t%d\n\t%d\t%d\t%d\t%d\n\t%d\t%d\t%d\t%d\n\t%d\t%d\t%d\t%d\n\n",
 											gl_para[0], gl_para[1], gl_para[2], gl_para[3],
 											gl_para[4], gl_para[5], gl_para[6], gl_para[7],
